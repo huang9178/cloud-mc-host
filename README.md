@@ -15,34 +15,61 @@
 
 ## 🚀 快速开始
 
-### 方式一：直接运行（推荐）
+### 支持的系统
+
+| 系统 | 开机自启动 | 守护进程 | 安装方式 |
+|------|-----------|---------|---------|
+| Windows 10/11 | ✅ 启动文件夹 | ✅ watchdog.bat | install-startup.bat |
+| Ubuntu/Debian | ✅ systemd | ✅ systemd自动重启 | install.sh |
+| CentOS/Fedora | ✅ systemd | ✅ systemd自动重启 | install.sh |
+| Arch Linux | ✅ systemd | ✅ systemd自动重启 | install.sh |
+| macOS | ✅ LaunchAgent | ✅ KeepAlive | install.sh |
+
+### Windows 安装
+
+1. 先安装Python：https://www.python.org/downloads/
+   - **务必勾选 "Add Python to PATH"**
+2. 解压项目到 `C:\CloudMC`（路径不要有中文）
+3. 双击运行 `install-startup.bat`
+4. 完成！开机自动启动
+
+**卸载**：双击 `uninstall-startup.bat`
+
+### Linux / macOS 安装
 
 ```bash
-# Linux/Mac
-chmod +x start.sh
-./start.sh
+# 1. 解压项目
+unzip cloud-mc-host.zip
+cd cloud-mc-host
 
-# Windows
-start.bat
+# 2. 运行安装脚本（自动检测系统，安装Python+依赖+配置开机自启）
+chmod +x install.sh
+./install.sh
+
+# 3. 完成！浏览器自动打开
 ```
 
-### 方式二：Windows开机自启动（24小时运行）
+**卸载**：
+```bash
+chmod +x uninstall.sh
+./uninstall.sh
+```
 
-1. 解压项目到固定目录（如 `C:\CloudMC`）
-2. 双击运行 `install-startup.bat`
-3. 脚本会自动：
-   - 安装Python依赖
-   - 添加到开机启动项
-   - 配置守护进程（崩溃自动重启）
-   - 后台隐藏运行（无弹窗）
-4. 重启电脑后，CloudMC会自动启动
-
-**卸载开机自启动**：双击 `uninstall-startup.bat`
-
-### 方式三：Docker部署
+### Docker 部署
 
 ```bash
 docker-compose up -d
+```
+
+### 手动运行（不配置开机自启）
+
+```bash
+# Windows
+start.bat
+
+# Linux/Mac
+chmod +x start.sh
+./start.sh
 ```
 
 ### 方式三：手动运行

@@ -1,23 +1,28 @@
 #!/bin/bash
+# CloudMC Start Script for Linux/Mac
+
 cd "$(dirname "$0")"
 
-export SECRET_KEY="${SECRET_KEY:-cloud-mc-host-secret-key-2026}"
-export ADMIN_USERNAME="${ADMIN_USERNAME:-admin}"
-export ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin123}"
-
-if [ ! -d "venv" ]; then
-    echo "创建虚拟环境..."
-    python3 -m venv venv
-fi
-
-source venv/bin/activate
-
-echo "安装依赖..."
-pip install -r requirements.txt
-
-echo "启动CloudMC托管系统..."
-echo "访问地址: http://localhost:5000"
-echo "默认账号: admin / admin123"
+echo "========================================"
+echo "   CloudMC Server Host"
+echo "========================================"
+echo ""
+echo "Access URL: http://localhost:5000"
+echo "Default account: admin / admin123"
+echo ""
+echo "Press Ctrl+C to stop."
+echo "========================================"
 echo ""
 
-python app.py
+# Detect Python
+if command -v python3 &> /dev/null; then
+    PYTHON=python3
+elif command -v python &> /dev/null; then
+    PYTHON=python
+else
+    echo "Error: Python not found!"
+    echo "Please install Python 3.8+"
+    exit 1
+fi
+
+$PYTHON app.py
