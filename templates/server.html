@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudMC - {{ server.name }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">☁️ CloudMC</div>
+        <div class="navbar-menu">
+            <a href="/dashboard" class="btn btn-outline">← 返回仪表盘</a>
+            <span class="user-info">👤 {{ username }}</span>
+            <a href="/logout" class="btn btn-outline">退出</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="page-header">
+            <h2>{{ server.name }}</h2>
+            <div class="server-actions">
+                {% if server.status == 'running' %}
+                    <button class="btn btn-success" onclick="restartServer()">🔄 重启</button>
+                    <button class="btn btn-danger" onclick="stopServer()">⏹ 停止</button>
+                {% else %}
+                    <button class="btn btn-success" onclick="startServer()">▶ 启动</button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="server-stats-bar">
+            <div class="stat-item"><span>状态:</span> <strong id="serverStatus">{{ '运行中' if server.status == 'running' else '已停止' }}</strong></div>
+            <div class="stat-item"><span>版本:</span> {{ server.version }}</div>
+            <div class="stat-item"><span>加载器:</span> {{ server.loader }}</div>
+            <div class="stat-item"><span>内存:</span> {{ server.memory }}</div>
+            <div class="stat-item"><span>端口:</span> {{ server.port }}</div>
+            <div class="stat-item"><span>CPU:</span> <strong id="cpuUsage">--</strong></div>
+            <div class="stat-item"><span>内存:</span> <strong id="memUsage">--</strong></div>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('console')">🖥️ 控制台</button>
+            <button class="tab-btn" onclick="switchTab('files')">📁 文件管理</button>
+            <button class="tab-btn" onclick="switchTab('backups')">💾 备份</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙️ 设置</button>
+        </div>
+        <div id="console-tab" class="tab-content active">
+            <div class="console-container">
+                <div class="console-output" id="consoleOutput"></div>
+                <div class="console-input">
+                    <input type="text" id="commandInput" placeholder="输入服务器命令（如：op 玩家名, say 你好）" onkeypress="if(event.key==='Enter')sendCommand()">
+                    <button class="btn btn-primary" onclick="sendCommand()">发送</button>
+                </div>
+            </div>
+        </div>
+        <div id="files-tab" class="tab-content">
+            <div class="file-manager">
+                <div class="file-toolbar">
+                    <button class="btn btn-outline" onclick="goBack()">← 返回</button>
+                    <span class="current-path" id="currentPath">/</span>
+                    <button class="btn btn-primary" onclick="showUploadModal()">📤 上传文件</button>
+                    <button class="btn btn-outline" onclick="showNewFolderModal()">📁 新建文件夹</button>
+                </div>
+                <div class="file-list" id="fileList"></div>
+            </div>
+        </div>
+        <div id="backups-tab" class="tab-content">
+            <div class="backup-manager">
+                <div class="backup-toolbar">
+                    <button class="btn btn-primary" onclick="createBackup()">💾 创建备份</button>
+                </div>
+                <div class="backup-list" id="backupList"></div>
+            </div>
+        </div>
+        <div id="settings-tab" class="tab-content">
+            <div class="settings-form">
+                <div class="form-group">
+                    <label>服务器名称</label>
+                    <input type="text" id="settingName" value="{{ server.name }}">
+                </div>
+                <div class="form-group">
+                    <label>内存分配</label>
+                    <select id="settingMemory">
+                        <option value="1G" {% if server.memory=='1G' %}selected{% endif %}>1GB</option>
+                        <option value="2G" {% if server.memory=='2G' %}selected{% endif %}>2GB</option>
+                        <option value="4G" {% if server.memory=='4G' %}selected{% endif %}>4GB</option>
+                        <option value="8G" {% if server.memory=='8G' %}selected{% endif %}>8GB</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>端口</label>
+                    <input type="number" id="settingPort" value="{{ server.port }}">
+                </div>
+                <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>上传文件</h3>
+                <button class="close" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>选择文件</label>
+                    <input type="file" id="uploadFile" multiple>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeUploadModal()">取消</button>
+                <button class="btn btn-primary" onclick="uploadFile()">上传</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="newFolderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新建文件夹</h3>
+                <button class="close" onclick="closeNewFolderModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>文件夹名称</label>
+                    <input type="text" id="newFolderName" placeholder="文件夹名称">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeNewFolderModal()">取消</button>
+                <button class="btn btn-primary" onclick="createFolder()">创建</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const SERVER_ID = '{{ server.id }}';
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="/static/js/server.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  cloudmc:
+    build: .
+    container_name: cloudmc-host
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - SECRET_KEY=your-secret-key-here
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin123
+      - DOCKER_ENABLED=false
