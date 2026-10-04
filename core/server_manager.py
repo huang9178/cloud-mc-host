@@ -12,7 +12,7 @@ class MCServer:
         self.config_file = os.path.join(self.server_dir, 'server_config.json')
         self.process = None
 
-    def create(self, name, version='1.20.1', loader='fabric', memory=DEFAULT_JAVA_MEMORY, port=DEFAULT_SERVER_PORT):
+    def create(self, name, version='1.20.1', loader='fabric', memory=DEFAULT_JAVA_MEMORY, port=DEFAULT_SERVER_PORT, auto_start=False):
         os.makedirs(self.server_dir, exist_ok=True)
         config = {
             'id': self.server_id,
@@ -23,7 +23,8 @@ class MCServer:
             'port': port,
             'status': 'stopped',
             'created_at': time.time(),
-            'jar_file': f'{loader}-server-launch.jar'
+            'jar_file': f'{loader}-server-launch.jar',
+            'auto_start': auto_start
         }
         with open(self.config_file, 'w') as f:
             json.dump(config, f, indent=2)
@@ -190,3 +191,20 @@ def list_servers():
                         config = json.load(f)
                     servers.append(config)
     return servers
+
+
+def auto_start_servers():
+    """启动所有配置了auto_start的服务器"""
+    started = []
+    servers = list_servers()
+    for config in servers:
+        if config.get('auto_start', False):
+            server = MCServer(config['id'])
+            if server.get_status() != 'running':
+                try:
+                    server.start()
+                    started.append(config['name'])
+                    print(f"[自动启动] {config['name']} 已启动")
+                except Exception as e:
+                    print(f"[自动启动失败] {config['name']}: {e}")
+    return started

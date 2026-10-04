@@ -92,12 +92,13 @@ def api_create_server():
     loader = data.get('loader', 'fabric')
     memory = data.get('memory', '2G')
     port = data.get('port', 25565)
+    auto_start = data.get('auto_start', False)
     servers = list_servers()
     if len(servers) >= MAX_SERVERS:
         return jsonify({'success': False, 'message': '已达到最大服务器数量限制'})
     server_id = str(uuid.uuid4())[:8]
     server = MCServer(server_id)
-    config = server.create(name, version, loader, memory, port)
+    config = server.create(name, version, loader, memory, port, auto_start)
     add_server_to_user(session['username'], server_id)
     return jsonify({'success': True, 'server': config})
 
@@ -128,6 +129,27 @@ def api_delete_server(server_id):
     server = MCServer(server_id)
     server.delete()
     return jsonify({'success': True, 'message': '服务器已删除'})
+
+@app.route('/api/servers/<server_id>', methods=['PUT'])
+@login_required
+def api_update_server(server_id):
+    data = request.get_json()
+    server = MCServer(server_id)
+    config = server.get_config()
+    if not config:
+        return jsonify({'success': False, 'message': '服务器不存在'})
+    updates = {}
+    if 'name' in data:
+        updates['name'] = data['name']
+    if 'memory' in data:
+        updates['memory'] = data['memory']
+    if 'port' in data:
+        updates['port'] = data['port']
+    if 'auto_start' in data:
+        updates['auto_start'] = data['auto_start']
+    if updates:
+        config = server.update_config(**updates)
+    return jsonify({'success': True, 'server': config})
 
 @app.route('/api/servers/<server_id>/stats', methods=['GET'])
 @login_required
@@ -278,4 +300,21 @@ def handle_send_command(data):
     emit('command_result', {'success': success, 'message': message, 'command': command})
 
 if __name__ == '__main__':
+    print("=" * 50)
+    print("  CloudMC 云服务器托管系统启动中...")
+    print("=" * 50)
+    print(f"  访问地址: http://localhost:5000")
+    print(f"  默认账号: {ADMIN_USERNAME} / {ADMIN_PASSWORD}")
+    print("=" * 50)
+
+    # 自动启动配置了auto_start的服务器
+    try:
+        from core.server_manager import auto_start_servers
+        started = auto_start_servers()
+        if started:
+            print(f"  已自动启动 {len(started)} 个服务器: {', '.join(started)}")
+    except Exception as e:
+        print(f"  自动启动检查失败: {e}")
+
+    print("=" * 50)
     socketio.run(app, host='0.0.0.0', port=5000, debug=False, allow_unsafe_werkzeug=True)

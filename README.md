@@ -26,7 +26,20 @@ chmod +x start.sh
 start.bat
 ```
 
-### 方式二：Docker部署
+### 方式二：Windows开机自启动（24小时运行）
+
+1. 解压项目到固定目录（如 `C:\CloudMC`）
+2. 双击运行 `install-startup.bat`
+3. 脚本会自动：
+   - 安装Python依赖
+   - 添加到开机启动项
+   - 配置守护进程（崩溃自动重启）
+   - 后台隐藏运行（无弹窗）
+4. 重启电脑后，CloudMC会自动启动
+
+**卸载开机自启动**：双击 `uninstall-startup.bat`
+
+### 方式三：Docker部署
 
 ```bash
 docker-compose up -d
@@ -65,6 +78,27 @@ python app.py
 1. 在文件管理中进入`mods`文件夹（没有则新建）
 2. 上传模组JAR文件
 3. 重启服务器
+
+### 5. 配置MC服务器开机自动启动
+
+创建服务器后，可以设置开机自动启动MC服务器：
+
+**方法一：通过API设置**
+```bash
+curl -X PUT http://localhost:5000/api/servers/<服务器ID> \
+  -H "Content-Type: application/json" \
+  -d '{"auto_start": true}'
+```
+
+**方法二：手动编辑配置文件**
+编辑 `data/servers/<服务器ID>/server_config.json`，添加或修改：
+```json
+{
+  "auto_start": true
+}
+```
+
+设置后，每次管理面板启动时会自动启动该MC服务器。配合Windows开机自启动，实现电脑开机→管理面板启动→MC服务器自动启动的全流程。
 
 ## ⚙️ 配置说明
 
