@@ -60,6 +60,15 @@ class FileManager:
         os.makedirs(target_dir, exist_ok=True)
         return True
 
+    def rename_file(self, path, new_name):
+        old_path = os.path.join(self.server_dir, path)
+        if not os.path.exists(old_path):
+            return False
+        dir_path = os.path.dirname(old_path)
+        new_path = os.path.join(dir_path, new_name)
+        os.rename(old_path, new_path)
+        return True
+
     def get_file_content(self, path):
         target_path = os.path.join(self.server_dir, path)
         if os.path.exists(target_path) and os.path.isfile(target_path):

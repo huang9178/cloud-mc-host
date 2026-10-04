@@ -3,7 +3,7 @@ import uuid
 import time
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file, flash
 from flask_socketio import SocketIO, emit
-from config import SECRET_KEY, MAX_SERVERS
+from config import SECRET_KEY, MAX_SERVERS, ADMIN_USERNAME, ADMIN_PASSWORD
 from core.auth import authenticate, create_user, get_user_servers, add_server_to_user
 from core.server_manager import MCServer, list_servers
 from core.file_manager import FileManager
@@ -182,6 +182,23 @@ def api_list_files(server_id):
     fm = FileManager(server_id)
     files = fm.list_files(path)
     return jsonify({'files': files, 'path': path})
+
+@app.route('/api/servers/<server_id>/files', methods=['POST'])
+@login_required
+def api_file_operation(server_id):
+    data = request.get_json() or {}
+    action = data.get('action', '')
+    path = data.get('path', '')
+    name = data.get('name', '')
+    fm = FileManager(server_id)
+    if action == 'mkdir':
+        success = fm.create_directory(path, name)
+        return jsonify({'success': success, 'message': '文件夹已创建' if success else '创建失败'})
+    elif action == 'rename':
+        new_name = data.get('new_name', '')
+        success = fm.rename_file(path, new_name)
+        return jsonify({'success': success})
+    return jsonify({'success': False, 'message': '未知操作'})
 
 @app.route('/api/servers/<server_id>/files/upload', methods=['POST'])
 @login_required
