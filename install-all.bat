@@ -11,18 +11,42 @@ echo.
 cd /d "%~dp0"
 
 REM ============================================
-REM Step 1: Check if Python is already installed
+REM Step 1: Check if Python is actually installed and working
 REM ============================================
 echo [Step 1/6] Checking Python...
-where python >nul 2>&1
+
+REM First try python3, then python
+set "PYTHON_CMD="
+python3 --version >nul 2>&1
 if not errorlevel 1 (
-    for /f "tokens=*" %%i in ('python --version 2^>^&1') do set PYVER=%%i
-    echo [OK] Python already installed: !PYVER!
-    goto :python_ok
+    set "PYTHON_CMD=python3"
+    goto :python_found
 )
 
-echo [INFO] Python not found. Will install automatically.
+python --version >nul 2>&1
+if not errorlevel 1 (
+    set "PYTHON_CMD=python"
+    goto :python_found
+)
+
+REM Python not found or Windows Store alias is interfering
+echo [INFO] Python not found (or Windows Store alias is blocking).
 echo.
+echo If you have already installed Python:
+echo   1. Open Settings -^> Apps -^> Advanced app settings -^> App execution aliases
+echo   2. Turn OFF "python.exe" and "python3.exe"
+echo   3. Restart this script
+echo.
+echo Will install Python automatically now...
+echo.
+goto :install_python
+
+:python_found
+for /f "tokens=*" %%i in ('%PYTHON_CMD% --version 2^>^&1') do set PYVER=%%i
+echo [OK] Python found: !PYVER!
+goto :python_ok
+
+:install_python
 
 REM ============================================
 REM Step 2: Try winget first (Windows 10/11 built-in)
@@ -104,23 +128,42 @@ echo.
 
 :python_ok
 REM ============================================
-REM Step 4: Verify Python
+REM Step 4: Verify Python (actually run it, not just where)
 REM ============================================
 echo [Step 4/6] Verifying Python installation...
 
-where python >nul 2>&1
-if errorlevel 1 (
+REM Re-detect after PATH refresh if not set yet
+if "%PYTHON_CMD%"=="" (
+    python3 --version >nul 2>&1
+    if not errorlevel 1 (
+        set "PYTHON_CMD=python3"
+    ) else (
+        python --version >nul 2>&1
+        if not errorlevel 1 (
+            set "PYTHON_CMD=python"
+        )
+    )
+)
+
+if "%PYTHON_CMD%"=="" (
     echo.
-    echo [ERROR] Python still not found after installation!
+    echo [ERROR] Python still not working after installation!
     echo.
-    echo Please RESTART your computer, then run this script again.
-    echo (Environment variables require restart to take effect)
+    echo This is usually caused by Windows Store alias blocking.
+    echo Please fix manually:
+    echo   1. Open Settings -^> Apps -^> Advanced app settings -^> App execution aliases
+    echo   2. Turn OFF "python.exe" and "python3.exe"
+    echo   3. RESTART your computer
+    echo   4. Run this script again
+    echo.
+    echo Or install Python manually from: https://www.python.org/downloads/
+    echo (Remember to check "Add Python to PATH" during installation!)
     echo.
     pause
     exit /b 1
 )
 
-for /f "tokens=*" %%i in ('python --version 2^>^&1') do set PYVER=%%i
+for /f "tokens=*" %%i in ('%PYTHON_CMD% --version 2^>^&1') do set PYVER=%%i
 echo [OK] Python is working: !PYVER!
 echo.
 
@@ -131,12 +174,12 @@ echo [Step 5/6] Installing Python dependencies...
 echo (This may take 1-3 minutes on first run)
 echo.
 
-python -m pip install --upgrade pip --quiet
-python -m pip install -r requirements.txt
+%PYTHON_CMD% -m pip install --upgrade pip --quiet
+%PYTHON_CMD% -m pip install -r requirements.txt
 
 if errorlevel 1 (
     echo [WARN] Some dependencies may have failed. Trying again with --user...
-    python -m pip install --user -r requirements.txt
+    %PYTHON_CMD% -m pip install --user -r requirements.txt
 )
 
 echo [OK] Dependencies installed.
